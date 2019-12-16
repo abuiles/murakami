@@ -3,7 +3,9 @@ package main
 import (
 	"encoding/json"
 	"io/ioutil"
+	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -71,10 +73,16 @@ func setupRouter() *gin.Engine {
 }
 
 func main() {
+	port := os.Getenv("PORT")
+
+	if port == "" {
+		log.Fatal("$PORT must be set")
+	}
+
 	r := setupRouter()
 
 	s := &http.Server{
-		Addr:        ":8080",
+		Addr:        ":" + port,
 		Handler:     r,
 		ReadTimeout: 5 * time.Second,
 	}

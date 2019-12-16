@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -33,24 +34,34 @@ func getData(url string, dest *gin.H) error {
 }
 
 func getComparison() gin.H {
+	var wg sync.WaitGroup
+
 	transferWise := gin.H{}
 	stellarDEX := gin.H{}
 
-	err := getData(
-		"https://api.transferwise.com/v3/comparisons?sourceCurrency=USD&targetCurrency=BRL&sendAmount=15",
-		&transferWise,
-	)
-	if err != nil {
-		return gin.H{}
-	}
+	wg.Add(1)
+	go func() {
+		log.Println("fetching data from Transferwise")
+		getData(
+			"https://api.transferwise.com/v3/comparisons?sourceCurrency=USD&targetCurrency=BRL&sendAmount=15",
+			&transferWise,
+		)
+		log.Println("data fetched from Transferwise")
+		wg.Done()
+	}()
 
-	err = getData(
-		"https://horizon.stellar.org/paths/strict-send?&source_amount=15&source_asset_type=credit_alphanum4&source_asset_code=USD&source_asset_issuer=GDUKMGUGDZQK6YHYA5Z6AY2G4XDSZPSZ3SW5UN3ARVMO6QSRDWP5YLEX&destination_assets=BRL:GDVKY2GU2DRXWTBEYJJWSFXIGBZV6AZNBVVSUHEPZI54LIS6BA7DVVSP",
-		&stellarDEX,
-	)
-	if err != nil {
-		return gin.H{}
-	}
+	wg.Add(1)
+	go func() {
+		log.Println("fetching data from Stellar DEX")
+		getData(
+			"https://horizon.stellar.org/paths/strict-send?&source_amount=15&source_asset_type=credit_alphanum4&source_asset_code=USD&source_asset_issuer=GDUKMGUGDZQK6YHYA5Z6AY2G4XDSZPSZ3SW5UN3ARVMO6QSRDWP5YLEX&destination_assets=BRL:GDVKY2GU2DRXWTBEYJJWSFXIGBZV6AZNBVVSUHEPZI54LIS6BA7DVVSP",
+			&stellarDEX,
+		)
+		log.Println("data fetched from Stellar DEX")
+		wg.Done()
+	}()
+
+	wg.Wait()
 
 	response := gin.H{
 		"transferWise": transferWise,

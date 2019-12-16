@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -73,6 +74,11 @@ func getComparison() gin.H {
 
 func setupRouter() *gin.Engine {
 	r := gin.Default()
+
+	r.Use(cors.New(cors.Config{
+		AllowAllOrigins: true,
+		AllowMethods:    []string{"GET"},
+	}))
 
 	api := r.Group("/api/v1")
 
